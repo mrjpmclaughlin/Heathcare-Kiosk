@@ -1,5 +1,4 @@
 #include "queue.h"
-#include <stdio.h>
 
 void init_queue(PatientQueue* q) {
     q->size = 0;
@@ -17,9 +16,23 @@ Patient dequeue(PatientQueue* q) {
 
     Patient first = q->items[0];
 
-    for (int i = 1; i < q->size; i++)
+    for (int i = 1; i < q->size; i++) {
         q->items[i - 1] = q->items[i];
+    }
 
     q->size--;
     return first;
+}
+
+// Remove and return patient at index, shifting others left.
+Patient remove_at(PatientQueue* q, int index) {
+    Patient empty = {0};
+    if (index < 0 || index >= q->size) return empty;
+
+    Patient chosen = q->items[index];
+    for (int i = index + 1; i < q->size; i++) {
+        q->items[i - 1] = q->items[i];
+    }
+    q->size--;
+    return chosen;
 }

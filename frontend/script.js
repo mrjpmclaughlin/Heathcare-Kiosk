@@ -2,6 +2,7 @@ const APPOINTMENTS_URL = "appointments.json";
 const STATUS_URL = "status.json";
 const LOG_URL = "log.txt";
 
+
 async function fetchJson(url) {
     const res = await fetch(url + "?t=" + Date.now()).catch(() => null);
     if (!res || !res.ok) return null;

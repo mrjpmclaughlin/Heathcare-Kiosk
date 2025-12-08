@@ -14,6 +14,8 @@
 pthread_mutex_t lock;
 PatientQueue queue;       // waiting
 PatientQueue being_seen;  // being seen
+SchedulingPolicy scheduling_policy;
+sem_t* er_slots;
 
 int main(void) {
     srand((unsigned)time(NULL));
@@ -25,6 +27,48 @@ int main(void) {
     }
     init_queue(&queue);
     init_queue(&being_seen);
+
+       // === Ask user to choose scheduling policy ===
+    int choice = 1;
+    printf("Select scheduling policy:\n");
+    printf("  1) FCFS (First-Come, First-Served)\n");
+    printf("  2) PRIORITY (by triage level)\n");
+    printf("  3) ROUND ROBIN\n");
+    printf("  4) MLFQ with aging\n");
+    printf("Enter choice (1-4): ");
+    if (scanf("%d", &choice) != 1) {
+        choice = 1;
+    }
+
+    switch (choice) {
+        case 1:
+            scheduling_policy = POLICY_FCFS;
+            break;
+        case 2:
+            scheduling_policy = POLICY_PRIORITY;
+            break;
+        case 3:
+            scheduling_policy = POLICY_RR;
+            break;
+        case 4:
+            scheduling_policy = POLICY_MLFQ;
+            break;
+        default:
+            scheduling_policy = POLICY_FCFS;
+            break;
+    }
+
+    printf("Using scheduling policy: %d\n", scheduling_policy);
+
+    // Remove any stale semaphore from previous runs
+    sem_unlink("/er_slots_sem");
+
+    // Create/open named semaphore
+    er_slots = sem_open("/er_slots_sem", O_CREAT, 0644, MAX_ROOMS);
+    if (er_slots == SEM_FAILED) {
+        perror("sem_open");
+        exit(1);
+    }
 
     pthread_t kiosks[4];
     pthread_t scheduler_thread;

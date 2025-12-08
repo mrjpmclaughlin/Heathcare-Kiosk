@@ -23,7 +23,10 @@ void* kiosk_thread(void* arg) {
         p.id = patient_counter++;
         snprintf(p.name, sizeof(p.name), "Patient %d", p.id);
         p.kiosk_id = kiosk_id;
-        p.triage = (rand() % 5) + 1;  // triage 1–5
+        p.triage = (rand() % 5) + 1;  // 1–5
+        p.room[0] = '\0';
+        p.time_in_room = 0;
+        p.wait_ticks = 0;
 
         enqueue(&queue, p);
         write_log("[KIOSK %d] Added %s (triage %d)\n", kiosk_id, p.name, p.triage);
