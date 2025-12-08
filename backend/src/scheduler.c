@@ -3,20 +3,21 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <semaphore.h>
+
 #include "globals.h"
 #include "scheduler.h"
 #include "queue.h"
 
-// Writes into backend/output/ (or adjust to "../frontend/" if you prefer)
+// Where backend files go
 #define OUTPUT_PATH "output/"
 
 static const char* policy_name(SchedulingPolicy p) {
     switch (p) {
-        case POLICY_FCFS:    return "FCFS";
-        case POLICY_PRIORITY:return "PRIORITY";
-        case POLICY_RR:      return "ROUND_ROBIN";
-        case POLICY_MLFQ:    return "MLFQ_AGING";
-        default:             return "UNKNOWN";
+        case POLICY_FCFS:     return "FCFS";
+        case POLICY_PRIORITY: return "PRIORITY";
+        case POLICY_RR:       return "ROUND_ROBIN";
+        case POLICY_MLFQ:     return "MLFQ_AGING";
+        default:              return "UNKNOWN";
     }
 }
 
@@ -42,7 +43,7 @@ void write_json_files() {
     FILE* f = fopen(app_path, "w");
     if (!f) return;
 
-    // ---- Waiting patients ----
+    // Waiting patients
     fprintf(f, "{\n  \"waiting\": [\n");
 
     for (int i = 0; i < queue.size; i++) {
@@ -56,7 +57,7 @@ void write_json_files() {
 
     fprintf(f, "  ],\n");
 
-    // ---- Being seen patients ----
+    // Being seen patients
     fprintf(f, "  \"being_seen\": [\n");
     for (int i = 0; i < being_seen.size; i++) {
         Patient p = being_seen.items[i];
@@ -71,7 +72,7 @@ void write_json_files() {
 
     fclose(f);
 
-    // ---- Status file ----
+    // Status file
     char status_path[256];
     snprintf(status_path, sizeof(status_path), "%sstatus.json", OUTPUT_PATH);
 
@@ -99,13 +100,21 @@ void write_json_files() {
 static int select_patient_index(SchedulingPolicy policy, PatientQueue* q) {
     if (q->size <= 0) return -1;
 
+    // Emergency override: always pick a triage-5 patient first if any exist
+    for (int i = 0; i < q->size; i++) {
+        if (q->items[i].triage == 5) {
+            return i;
+        }
+    }
+
+    //scheduling algorithms
     switch (policy) {
         case POLICY_FCFS:
             // First-Come-First-Served: take front of queue
             return 0;
 
         case POLICY_PRIORITY: {
-            // Highest triage value (5 = most critical)
+            // Highest triage value 5 = most critical
             int best_index = 0;
             int best_triage = q->items[0].triage;
             for (int i = 1; i < q->size; i++) {
@@ -147,17 +156,15 @@ void* scheduler_main(void* arg) {
     (void)arg;
 
     int next_room = 1;
-    int tick = 0;
 
     write_log("[SCHEDULER] Starting with policy %s\n", policy_name(scheduling_policy));
 
     while (1) {
         sleep(2);  // scheduler tick
-        tick++;
 
         pthread_mutex_lock(&lock);
 
-        // ---- 1) Aging for MLFQ: increase wait_ticks and boost triage over time ----
+        //  Aging for MLFQ so it will increase wait_ticks and boost triage over time. Consulted ChatGPT to help with the logic
         if (scheduling_policy == POLICY_MLFQ) {
             for (int i = 0; i < queue.size; i++) {
                 Patient *p = &queue.items[i];
@@ -170,13 +177,13 @@ void* scheduler_main(void* arg) {
                 }
             }
         } else {
-            // For other policies, just increment wait_ticks (optional: for stats later)
+            // For other policies, just increment wait_ticks
             for (int i = 0; i < queue.size; i++) {
                 queue.items[i].wait_ticks++;
             }
         }
 
-        // ---- 2) Update patients already being seen (service time & discharge) ----
+        // Update patients already being seen
         int i = 0;
         while (i < being_seen.size) {
             Patient *p = &being_seen.items[i];
@@ -196,52 +203,130 @@ void* scheduler_main(void* arg) {
                 // Free one ER room slot in the semaphore
                 sem_post(er_slots);
 
-                continue;  // do not increment i; we just shifted
+                continue;  // do not increment i
             }
 
             i++;
         }
 
-        // ---- 3) While there is a free ER slot, admit patients based on scheduling policy ----
-        while (queue.size > 0) {
-            // Try to take a room slot without blocking
-            if (sem_trywait(er_slots) != 0) {
-                // No free rooms right now
+        // interrupt: emergency preemption for triage-5 patients
+        // Look for an emergency in the waiting queue.
+        int emergency_index = -1;
+        for (int k = 0; k < queue.size; k++) {
+            if (queue.items[k].triage == 5) {
+                emergency_index = k;
                 break;
             }
-
-            int index = select_patient_index(scheduling_policy, &queue);
-            if (index < 0) {
-                // Nothing to schedule after all; return the slot
-                sem_post(er_slots);
-                break;
-            }
-
-            Patient p = remove_at(&queue, index);
-
-            // Assign exam room and reset time in room
-            snprintf(p.room, sizeof(p.room), "Exam %d", next_room);
-            p.time_in_room = 0;
-            p.wait_ticks   = 0;  // they’re no longer waiting
-
-            next_room++;
-            if (next_room > MAX_ROOMS) {
-                next_room = 1;
-            }
-
-            enqueue(&being_seen, p);
-            write_log("[SCHEDULER] Moved %s (triage %d) into %s using policy %s\n",
-                      p.name, p.triage, p.room, policy_name(scheduling_policy));
-
-            // For RR over the waiting queue, you can optionally rotate here,
-            // but since you use rr_pos in select_patient_index, it’s not necessary.
         }
 
-        // ---- 4) Write JSON snapshots ----
+        // Only consider preemption if:
+        //  - There is at least one emergency waiting, AND
+        //  - All rooms are currently full.
+        if (emergency_index >= 0 && being_seen.size == MAX_ROOMS) {
+            // Choose a victim in being_seen to be preempted:
+            // lowest triage; if tie, longest time_in_room.
+            int victim_index = -1;
+            int worst_triage = 6;      // higher than any real triage
+            int longest_time = -1;
+
+            for (int k = 0; k < being_seen.size; k++) {
+                Patient *bp = &being_seen.items[k];
+
+                // don't preempt another triage-5 emergency.
+                if (bp->triage >= 5) {
+                    continue;
+                }
+
+                if (bp->triage < worst_triage) {
+                    worst_triage = bp->triage;
+                    longest_time = bp->time_in_room;
+                    victim_index = k;
+                } else if (bp->triage == worst_triage &&
+                           bp->time_in_room > longest_time) {
+                    longest_time = bp->time_in_room;
+                    victim_index = k;
+                }
+            }
+
+            if (victim_index >= 0) {
+                // found someone to preempt
+                Patient victim = being_seen.items[victim_index];
+
+                // Remove victim from being_seen shift left
+                for (int j = victim_index + 1; j < being_seen.size; j++) {
+                    being_seen.items[j - 1] = being_seen.items[j];
+                }
+                being_seen.size--;
+
+                // Take the emergency patient from the waiting queue
+                Patient emerg = remove_at(&queue, emergency_index);
+
+                // Emergency gets the victim's room
+                snprintf(emerg.room, sizeof(emerg.room), "%s", victim.room);
+                emerg.time_in_room = 0;
+                emerg.wait_ticks   = 0;
+
+                // Victim goes back to the end of the waiting room
+                victim.room[0]      = '\0';
+                victim.time_in_room = 0;
+                victim.wait_ticks   = 0;
+                enqueue(&queue, victim);
+
+                write_log("[INTERRUPT] Emergency %s (triage %d) preempted %s for room %s\n",
+                          emerg.name, emerg.triage, victim.name, emerg.room);
+
+                // Put emergency into being_seen
+                enqueue(&being_seen, emerg);
+
+            }
+        }
+
+        // Consumer side of producer–consumer: wait for patients when buffer empty
+        if (being_seen.size < MAX_ROOMS) {
+            // If no patients are waiting, block the scheduler until a kiosk signals not_empty
+            while (queue.size == 0) {
+                write_log("[SCHEDULER] Waiting room empty; consumer blocking\n");
+                pthread_cond_wait(&not_empty, &lock);
+            }
+
+            // should be queue.size > 0
+
+            // Try to claim an ER slot (resource) without blocking forever
+            if (sem_trywait(er_slots) == 0) {
+                int index = select_patient_index(scheduling_policy, &queue);
+                if (index >= 0) {
+                    Patient p = remove_at(&queue, index);
+
+                    // remove one from the bounded buffer → signal a free slot to producers
+                    pthread_cond_signal(&not_full);
+
+                    // Assign exam room and reset time in room
+                    snprintf(p.room, sizeof(p.room), "Exam %d", next_room);
+                    p.time_in_room = 0;
+                    p.wait_ticks   = 0;
+
+                    next_room++;
+                    if (next_room > MAX_ROOMS) {
+                        next_room = 1;
+                    }
+
+                    enqueue(&being_seen, p);
+                    write_log("[SCHEDULER] Moved %s (triage %d) into %s using policy %s\n",
+                              p.name, p.triage, p.room, policy_name(scheduling_policy));
+                } else {
+                    // No valid index after all; return the ER slot
+                    sem_post(er_slots);
+                }
+            } else {
+                // No ER slots available according to semaphore; do nothing this tick.
+                write_log("[SCHEDULER] No ER slots available (semaphore)\n");
+            }
+        }
+
+        // Write JSON snapshots
         write_json_files();
         write_log("[SCHEDULER] JSON updated (%d waiting, %d being seen) under %s\n",
                   queue.size, being_seen.size, policy_name(scheduling_policy));
-
 
         pthread_mutex_unlock(&lock);
     }

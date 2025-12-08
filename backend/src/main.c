@@ -12,10 +12,12 @@
 
 // Define the globals declared in globals.h
 pthread_mutex_t lock;
-PatientQueue queue;       // waiting
-PatientQueue being_seen;  // being seen
+PatientQueue queue;       
+PatientQueue being_seen;  
 SchedulingPolicy scheduling_policy;
 sem_t* er_slots;
+pthread_cond_t not_full  = PTHREAD_COND_INITIALIZER;
+pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
 
 int main(void) {
     srand((unsigned)time(NULL));
@@ -28,7 +30,7 @@ int main(void) {
     init_queue(&queue);
     init_queue(&being_seen);
 
-       // === Ask user to choose scheduling policy ===
+       // Ask user to choose scheduling policy
     int choice = 1;
     printf("Select scheduling policy:\n");
     printf("  1) FCFS (First-Come, First-Served)\n");
@@ -63,7 +65,7 @@ int main(void) {
     // Remove any stale semaphore from previous runs
     sem_unlink("/er_slots_sem");
 
-    // Create/open named semaphore
+    // Create/open named semaphore. needed to us enamed semaphores for MacOS
     er_slots = sem_open("/er_slots_sem", O_CREAT, 0644, MAX_ROOMS);
     if (er_slots == SEM_FAILED) {
         perror("sem_open");
@@ -100,7 +102,7 @@ int main(void) {
         sleep(1);
     }
 
-    // (Unreached in this version)
+    // not sure if this actually does anything?
     pthread_mutex_destroy(&lock);
     return 0;
 }

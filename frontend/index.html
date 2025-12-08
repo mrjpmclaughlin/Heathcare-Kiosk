@@ -12,7 +12,7 @@
       <p>Monitoring four check-in kiosks and the ER scheduling system (C backend).</p>
     </header>
 
-    <!-- Row 1: Kiosks + Overall Status -->
+    <!-- Kiosks + Overall Status -->
     <div class="row">
       <!-- Kiosk summary cards -->
       <div class="card" style="flex: 2;">
@@ -35,14 +35,14 @@
             Loading...
           </p>
           <p class="small-label" style="margin-top: 4px;">
-            Policy is chosen and applied by the C scheduler thread (e.g., FCFS, priority by triage).
+            Policy is chosen and applied by the C scheduler thread
           </p>
         </div>
       </div>
     </div>
 
 
-    <!-- Row 2: Queue + Being Seen -->
+    <!-- Queue + Being Seen -->
     <div class="row">
       <div class="card" style="flex: 2;">
         <h2>Waiting Room Queue</h2>
@@ -74,13 +74,13 @@
       </div>
     </div>
 
-    <!-- Row 3: Log -->
+    <!-- Log -->
     <div class="row">
       <div class="card" style="flex: 1;">
         <div class="log-header-row">
           <div>
             <h2>Event Log</h2>
-            <p class="small-label">Low-level events from the C backend (locks, enqueue, dequeue, scheduling decisions).</p>
+            <p class="small-label">Log for low-level events</p>
           </div>
           <div id="logStatus" class="status-ok">Live</div>
         </div>

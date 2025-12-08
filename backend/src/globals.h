@@ -9,7 +9,7 @@ typedef enum {
     POLICY_MLFQ = 3
 } SchedulingPolicy;
 
-// move these here so everyone shares the same values
+
 #define MAX_ROOMS 3
 #define SERVICE_TICKS 5
 #define AGE_THRESHOLD 5
@@ -18,4 +18,9 @@ extern pthread_mutex_t lock;
 extern PatientQueue queue;
 extern PatientQueue being_seen;
 extern SchedulingPolicy scheduling_policy;
-extern sem_t* er_slots;   // NEW: semaphore for ER slots
+extern sem_t* er_slots;   //semaphore for ER slots
+extern pthread_cond_t not_full;   // signaled when a slot in the waiting room frees up
+extern pthread_cond_t not_empty;  // signaled when at least one patient is waiting
+
+
+#define MAX_WAITING 20   // max number of patients in waiting room

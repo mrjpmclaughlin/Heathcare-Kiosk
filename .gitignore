@@ -1,6 +1,4 @@
-# ===============================
 # Backend build artifacts
-# ===============================
 
 backend/er_sim
 backend/src/*.o
@@ -12,23 +10,18 @@ backend/src/*.so
 backend/src/*.dSYM/
 *.dSYM/
 
-# ===============================
 # Backend output files
-# (These are generated at runtime)
-# ===============================
 
 backend/output/appointments.json
 backend/output/status.json
 backend/output/log.txt
 
-# OPTIONAL: If you symlink these into frontend:
+# symlinked into frontend:
 frontend/appointments.json
 frontend/status.json
 frontend/log.txt
 
-# ===============================
 # OS / editor junk files
-# ===============================
 
 # macOS
 .DS_Store
@@ -44,10 +37,7 @@ Thumbs.db
 # JetBrains
 .idea/
 
-# ===============================
-# Node / Web stuff (future proofing)
-# If you later use React or npm
-# ===============================
+# Node / Web stuff
 
 node_modules/
 dist/

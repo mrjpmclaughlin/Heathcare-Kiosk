@@ -1,0 +1,48 @@
+Date : 2025-12-07 22:06:44
+Directory : /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk
+Total : 13 files,  800 codes, 48 comments, 177 blanks, all 1025 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| C          |          4 |        318 |         34 |         82 |        434 |
+| PostCSS    |          1 |        181 |          3 |         37 |        221 |
+| JavaScript |          1 |        154 |          1 |         29 |        184 |
+| HTML       |          1 |         80 |          9 |          8 |         97 |
+| C++        |          4 |         48 |          1 |         13 |         62 |
+| Makefile   |          1 |         10 |          0 |          5 |         15 |
+| Markdown   |          1 |          9 |          0 |          3 |         12 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                     | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                        |         13 |        800 |         48 |        177 |      1,025 |
+| . (Files)                                                                |          1 |          9 |          0 |          3 |         12 |
+| backend                                                                  |          9 |        376 |         35 |        100 |        511 |
+| backend (Files)                                                          |          1 |         10 |          0 |          5 |         15 |
+| backend/src                                                              |          8 |        366 |         35 |         95 |        496 |
+| frontend                                                                 |          3 |        415 |         13 |         74 |        502 |
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                 | language   | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/README.md               | Markdown   |          9 |          0 |          3 |         12 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/Makefile        | Makefile   |         10 |          0 |          5 |         15 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/globals.h   | C++        |         17 |          1 |          4 |         22 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/kiosk.c     | C          |         28 |          1 |         10 |         39 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/kiosk.h     | C++        |          4 |          0 |          2 |          6 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/main.c      | C          |         81 |          9 |         16 |        106 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/queue.c     | C          |         29 |          1 |          8 |         38 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/queue.h     | C++        |         21 |          0 |          5 |         26 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/scheduler.c | C          |        180 |         23 |         48 |        251 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/backend/src/scheduler.h | C++        |          6 |          0 |          2 |          8 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/frontend/index.html     | HTML       |         80 |          9 |          8 |         97 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/frontend/script.js      | JavaScript |        154 |          1 |         29 |        184 |
+| /Users/jpmclaughlin/IdeaProjects/Heathcare-Kiosk/frontend/styles.css     | PostCSS    |        181 |          3 |         37 |        221 |
+| Total                                                                    |            |        800 |         48 |        177 |      1,025 |
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
