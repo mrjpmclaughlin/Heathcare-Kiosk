@@ -13,7 +13,11 @@ typedef enum {
 #define MAX_ROOMS 3
 #define SERVICE_TICKS 5
 #define AGE_THRESHOLD 5
+#define MAX_PATIENTS 100
+#define NUM_KIOSKS 4
 
+extern int discharged_count;
+extern int simulation_done;
 extern pthread_mutex_t lock;
 extern PatientQueue queue;
 extern PatientQueue being_seen;

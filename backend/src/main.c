@@ -18,6 +18,8 @@ SchedulingPolicy scheduling_policy;
 sem_t* er_slots;
 pthread_cond_t not_full  = PTHREAD_COND_INITIALIZER;
 pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
+int discharged_count = 0;
+int simulation_done  = 0;
 
 int main(void) {
     srand((unsigned)time(NULL));
@@ -72,11 +74,11 @@ int main(void) {
         exit(1);
     }
 
-    pthread_t kiosks[4];
+    pthread_t kiosks[NUM_KIOSKS];
     pthread_t scheduler_thread;
 
     // Start 4 kiosk threads
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_KIOSKS; i++) {
         int *id = malloc(sizeof(int));
         if (!id) {
             perror("malloc");
@@ -95,14 +97,24 @@ int main(void) {
         return 1;
     }
 
-    printf("Simulation running. Press Ctrl+C to stop.\n");
+    printf("Simulation running. Target: %d discharged patients.\n", MAX_PATIENTS);
 
-    // Keep main alive; threads run indefinitely
-    while (1) {
-        sleep(1);
+    // Wait for scheduler to finish (it will set simulation_done once it hits MAX_PATIENTS)
+    pthread_join(scheduler_thread, NULL);
+
+    // Once scheduler is done, kiosks should notice simulation_done and exit too.
+    for (int i = 0; i < NUM_KIOSKS; i++) {
+        pthread_join(kiosks[i], NULL);
     }
 
-    // not sure if this actually does anything?
+    // Cleanup
+    sem_close(er_slots);
+    sem_unlink("/er_slots_sem");
+
     pthread_mutex_destroy(&lock);
+    pthread_cond_destroy(&not_full);
+    pthread_cond_destroy(&not_empty);
+
+    printf("Simulation finished after %d discharged patients.\n", discharged_count);
     return 0;
 }

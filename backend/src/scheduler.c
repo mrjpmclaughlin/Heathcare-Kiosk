@@ -164,6 +164,11 @@ void* scheduler_main(void* arg) {
 
         pthread_mutex_lock(&lock);
 
+        if (simulation_done) {
+            pthread_mutex_unlock(&lock);
+            break;  // exit scheduler_main
+        }       
+
         //  Aging for MLFQ so it will increase wait_ticks and boost triage over time. Consulted ChatGPT to help with the logic
         if (scheduling_policy == POLICY_MLFQ) {
             for (int i = 0; i < queue.size; i++) {
@@ -203,12 +208,30 @@ void* scheduler_main(void* arg) {
                 // Free one ER room slot in the semaphore
                 sem_post(er_slots);
 
-                continue;  // do not increment i
+                // Increment discharged count and check stop condition
+                discharged_count++;
+                write_log("[SCHEDULER] discharged_count = %d (MAX_PATIENTS = %d)\n",
+                    discharged_count, MAX_PATIENTS);
+                if (discharged_count >= MAX_PATIENTS && !simulation_done) {
+                    simulation_done = 1;
+                    write_log("[SCHEDULER] Reached MAX_PATIENTS = %d; stopping simulation\n",
+                              MAX_PATIENTS);
+
+                    // Wake up any waiting producers/consumers so they can exit
+                    pthread_cond_broadcast(&not_full);
+                    pthread_cond_broadcast(&not_empty);
+                }
+
+                continue;  // do not increment i; we just shifted
             }
+
 
             i++;
         }
-
+        if (simulation_done) {
+            pthread_mutex_unlock(&lock);
+            break;
+        }
         // interrupt: emergency preemption for triage-5 patients
         // Look for an emergency in the waiting queue.
         int emergency_index = -1;
@@ -289,6 +312,10 @@ void* scheduler_main(void* arg) {
                 pthread_cond_wait(&not_empty, &lock);
             }
 
+            if (simulation_done) {
+                pthread_mutex_unlock(&lock);
+                break;
+            }
             // should be queue.size > 0
 
             // Try to claim an ER slot (resource) without blocking forever
@@ -330,6 +357,6 @@ void* scheduler_main(void* arg) {
 
         pthread_mutex_unlock(&lock);
     }
-
+    write_log("[SCHEDULER] Exiting (simulation_done)\n");
     return NULL;
 }
