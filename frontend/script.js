@@ -40,30 +40,101 @@ async function fetchText(url) {
     }
 }
 
+function computeKioskStats(appointments) {
+    const waiting = appointments?.waiting || [];
+    const beingSeen = appointments?.being_seen || [];
+
+    const statsById = new Map();
+
+    function getStat(id) {
+        if (!statsById.has(id)) {
+            statsById.set(id, {
+                kiosk_id: id,
+                patients_checked_in: 0,
+                waiting: 0,
+                being_seen: 0,
+                last_arrival_time: 0
+            });
+        }
+        return statsById.get(id);
+    }
+
+    function processPatient(p, where) {
+        const id = (p.kiosk_id != null) ? p.kiosk_id : "?";
+        const stat = getStat(id);
+
+        stat.patients_checked_in++;
+        if (where === "waiting") stat.waiting++;
+        if (where === "being_seen") stat.being_seen++;
+
+        if (typeof p.arrival_time === "number" &&
+            p.arrival_time > stat.last_arrival_time) {
+            stat.last_arrival_time = p.arrival_time;
+        }
+    }
+
+    waiting.forEach(p => processPatient(p, "waiting"));
+    beingSeen.forEach(p => processPatient(p, "being_seen"));
+
+    // Ensure kiosks 1-4 always show up even if empty
+    for (let id = 1; id <= 4; id++) {
+        if (!statsById.has(id)) {
+            statsById.set(id, {
+                kiosk_id: id,
+                patients_checked_in: 0,
+                waiting: 0,
+                being_seen: 0,
+                last_arrival_time: 0
+            });
+        }
+    }
+
+    return Array.from(statsById.values()).sort((a, b) => {
+        if (typeof a.kiosk_id === "number" && typeof b.kiosk_id === "number") {
+            return a.kiosk_id - b.kiosk_id;
+        }
+        return String(a.kiosk_id).localeCompare(String(b.kiosk_id));
+    });
+}
+
 function renderKiosks(kioskStats) {
     const container = document.getElementById("kioskGrid");
     container.innerHTML = "";
 
     if (!Array.isArray(kioskStats) || kioskStats.length === 0) {
-    container.innerHTML = "<p class='small-label'>No kiosk data available yet.</p>";
-    return;
+        container.innerHTML = "<p class='small-label'>No kiosk data available yet.</p>";
+        return;
     }
 
     kioskStats.forEach(stat => {
-    const div = document.createElement("div");
-    div.className = "card kiosk-card";
-    div.innerHTML = `
-        <div class="kiosk-title">
-        <span>Kiosk ${stat.kiosk_id ?? "?"}</span>
-        <span class="pill">Thread #${stat.kiosk_id ?? "?"}</span>
-        </div>
-        <div class="kiosk-stat">
-        Patients checked in: <strong>${stat.patients_checked_in ?? 0}</strong>
-        </div>
-    `;
-    container.appendChild(div);
+        const div = document.createElement("div");
+        div.className = "card kiosk-card";
+
+        const lastArrivalLabel =
+            stat.last_arrival_time && stat.last_arrival_time > 0
+                ? formatTimeEpoch(stat.last_arrival_time)   // uses the helper we added earlier
+                : "-";
+
+        div.innerHTML = `
+            <div class="kiosk-title">
+              <span>Kiosk ${stat.kiosk_id ?? "?"}</span>
+              <span class="pill">Thread #${stat.kiosk_id ?? "?"}</span>
+            </div>
+            <div class="kiosk-stat">
+              Patients checked in: <strong>${stat.patients_checked_in}</strong>
+            </div>
+            <div class="kiosk-stat">
+              In queue: <strong>${stat.waiting}</strong>
+              · Being seen: <strong>${stat.being_seen}</strong>
+            </div>
+            <div class="kiosk-stat small-label">
+              Last arrival: ${lastArrivalLabel}
+            </div>
+        `;
+        container.appendChild(div);
     });
 }
+
 
 function renderMetrics(status, appointments) {
     const metricsEl = document.getElementById("metrics");
@@ -211,7 +282,9 @@ async function refresh() {
     fetchText(LOG_URL)
     ]);
 
-    renderKiosks(appointments?.kiosk_stats || []);
+    const kioskStats = computeKioskStats(appointments || {});
+
+    renderKiosks(kioskStats);
     renderMetrics(status || {}, appointments || {});
     renderQueue(appointments?.waiting || []);
     renderBeingSeen(appointments?.being_seen || []);
