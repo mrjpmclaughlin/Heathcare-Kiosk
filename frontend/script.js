@@ -2,6 +2,23 @@ const APPOINTMENTS_URL = "appointments.json";
 const STATUS_URL = "status.json";
 const LOG_URL = "log.txt";
 
+function formatTimeEpoch(epochSeconds) {
+  if (!epochSeconds || epochSeconds <= 0) return "-";
+  const d = new Date(epochSeconds * 1000);
+  return d.toLocaleTimeString(); // e.g. "3:05:09 PM"
+}
+
+function formatDuration(seconds) {
+  if (seconds == null || seconds < 0) return "-";
+  const s = Math.floor(seconds);
+  if (s < 60) return s + "s";
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  if (m < 60) return `${m}m ${r}s`;
+  const h = Math.floor(m / 60);
+  const mr = m % 60;
+  return `${h}h ${mr}m`;
+}
 
 async function fetchJson(url) {
     const res = await fetch(url + "?t=" + Date.now()).catch(() => null);
@@ -52,30 +69,38 @@ function renderMetrics(status, appointments) {
     const metricsEl = document.getElementById("metrics");
     metricsEl.innerHTML = "";
 
-    const totalPatients = status?.total_patients ?? (appointments?.waiting?.length || 0) + (appointments?.being_seen?.length || 0);
+    const totalPatients =
+        status?.total_patients ??
+        ((appointments?.waiting?.length || 0) +
+         (appointments?.being_seen?.length || 0));
+
     const avgWait = status?.average_wait_seconds;
     const lastUpdate = status?.last_update ?? "n/a";
 
     function metric(label, value) {
-    const div = document.createElement("div");
-    div.className = "metric-box";
-    div.innerHTML = `<strong>${value}</strong> ${label}`;
-    metricsEl.appendChild(div);
+        const div = document.createElement("div");
+        div.className = "metric-box";
+        div.innerHTML = `<strong>${value}</strong> ${label}`;
+        metricsEl.appendChild(div);
     }
 
     metric("patients total", totalPatients);
     metric("in queue", appointments?.waiting?.length ?? 0);
     metric("being seen", appointments?.being_seen?.length ?? 0);
+
+    // format to minute/seconds
     if (typeof avgWait === "number") {
-    metric("avg wait (sec)", avgWait.toFixed(0));
+        metric("avg wait", formatDuration(avgWait));
     }
+
     const div = document.createElement("div");
     div.className = "metric-box";
     div.textContent = "Last update: " + lastUpdate;
     metricsEl.appendChild(div);
 
     const policyLabel = document.getElementById("policyLabel");
-    policyLabel.textContent = status?.scheduling_policy ?? "Unknown (status.json missing)";
+    policyLabel.textContent =
+        status?.scheduling_policy ?? "Unknown (status.json missing)";
 }
 
 function renderQueue(waiting) {
@@ -109,7 +134,7 @@ function renderQueue(waiting) {
     tr.appendChild(tdTriage);
 
     const tdArrival = document.createElement("td");
-    tdArrival.textContent = p.arrival_time ?? "-";
+    tdArrival.textContent = formatTimeEpoch(p.arrival_time);
     tr.appendChild(tdArrival);
 
     const tdKiosk = document.createElement("td");
@@ -122,8 +147,14 @@ function renderQueue(waiting) {
     statusSpan.textContent = s;
     statusSpan.className = "pill " + (s === "waiting" ? "waiting" : s === "being_seen" ? "being-seen" : "");
     tdStatus.appendChild(statusSpan);
+    if (typeof p.wait_seconds === "number" && p.wait_seconds >= 0) {
+        const waitSpan = document.createElement("span");
+        waitSpan.className = "small-label";
+        waitSpan.style.marginLeft = "4px";
+        waitSpan.textContent = `(${formatDuration(p.wait_seconds)})`;
+        tdStatus.appendChild(waitSpan);
+    }
     tr.appendChild(tdStatus);
-
     tbody.appendChild(tr);
     });
 }
@@ -133,18 +164,26 @@ function renderBeingSeen(beingSeen) {
     ul.innerHTML = "";
 
     if (!Array.isArray(beingSeen) || beingSeen.length === 0) {
-    const li = document.createElement("li");
-    li.className = "small-label";
-    li.textContent = "No patients currently being seen.";
-    ul.appendChild(li);
-    return;
+        const li = document.createElement("li");
+        li.className = "small-label";
+        li.textContent = "No patients currently being seen.";
+        ul.appendChild(li);
+        return;
     }
 
     beingSeen.forEach(p => {
-    const li = document.createElement("li");
-    const room = p.room ? ` in ${p.room}` : "";
-    li.innerHTML = `<strong>${p.name ?? "Unknown"}</strong> (triage ${p.triage ?? "?"})${room}`;
-    ul.appendChild(li);
+        const li = document.createElement("li");
+        const room = p.room ? ` in ${p.room}` : "";
+        const arrived = formatTimeEpoch(p.arrival_time);
+        const waited = formatDuration(p.wait_seconds);
+
+        li.innerHTML = `
+            <strong>${p.name ?? "Unknown"}</strong> (triage ${p.triage ?? "?"})${room}<br>
+            <span class="small-label">
+              Arrived: ${arrived} · Waited before room: ${waited}
+            </span>
+        `;
+        ul.appendChild(li);
     });
 }
 

@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <semaphore.h>
-
+#include <time.h>
 #include "globals.h"
 #include "scheduler.h"
 #include "queue.h"
@@ -11,6 +11,8 @@
 // Where backend files go
 #define OUTPUT_PATH "output/"
 
+static long total_wait_seconds = 0;
+static int  patients_with_recorded_wait = 0;
 static const char* policy_name(SchedulingPolicy p) {
     switch (p) {
         case POLICY_FCFS:     return "FCFS";
@@ -49,8 +51,14 @@ void write_json_files() {
     for (int i = 0; i < queue.size; i++) {
         Patient p = queue.items[i];
         fprintf(f,
-            "    {\"id\": %d, \"name\": \"%s\", \"triage\": %d, \"kiosk_id\": %d, \"status\": \"waiting\"}%s\n",
-            p.id, p.name, p.triage, p.kiosk_id,
+            "    {\"id\": %d, \"name\": \"%s\", \"triage\": %d, \"kiosk_id\": %d, "
+            "\"status\": \"waiting\", \"arrival_time\": %ld, \"wait_seconds\": %d}%s\n",
+            p.id,
+            p.name,
+            p.triage,
+            p.kiosk_id,
+            (long)p.arrival_time,
+            (p.wait_seconds < 0 ? 0 : p.wait_seconds),
             (i == queue.size - 1 ? "" : ",")
         );
     }
@@ -62,8 +70,16 @@ void write_json_files() {
     for (int i = 0; i < being_seen.size; i++) {
         Patient p = being_seen.items[i];
         fprintf(f,
-            "    {\"id\": %d, \"name\": \"%s\", \"triage\": %d, \"kiosk_id\": %d, \"status\": \"being_seen\", \"room\": \"%s\"}%s\n",
-            p.id, p.name, p.triage, p.kiosk_id, p.room,
+            "    {\"id\": %d, \"name\": \"%s\", \"triage\": %d, \"kiosk_id\": %d, "
+            "\"status\": \"being_seen\", \"room\": \"%s\", "
+            "\"arrival_time\": %ld, \"wait_seconds\": %d}%s\n",
+            p.id,
+            p.name,
+            p.triage,
+            p.kiosk_id,
+            p.room,
+            (long)p.arrival_time,
+            (p.wait_seconds < 0 ? 0 : p.wait_seconds),
             (i == being_seen.size - 1 ? "" : ",")
         );
     }
@@ -81,16 +97,23 @@ void write_json_files() {
 
     int total = queue.size + being_seen.size;
 
+    int avg_wait = 0;
+    if (patients_with_recorded_wait > 0) {
+        avg_wait = (int)(total_wait_seconds / patients_with_recorded_wait);
+    }
+
     fprintf(s,
         "{\n"
         "  \"scheduling_policy\": \"%s\",\n"
         "  \"total_patients\": %d,\n"
         "  \"average_wait_seconds\": %d,\n"
+        "  \"patients_with_recorded_wait\": %d,\n"
         "  \"last_update\": \"N/A\"\n"
         "}\n",
         policy_name(scheduling_policy),
         total,
-        0
+        avg_wait,
+        patients_with_recorded_wait
     );
 
     fclose(s);
@@ -331,6 +354,18 @@ void* scheduler_main(void* arg) {
                     snprintf(p.room, sizeof(p.room), "Exam %d", next_room);
                     p.time_in_room = 0;
                     p.wait_ticks   = 0;
+
+                    if (p.wait_seconds < 0) {  // -1 means “not calculated yet”
+                        time_t now = time(NULL);
+                        p.wait_seconds = (int)difftime(now, p.arrival_time);
+                        total_wait_seconds += p.wait_seconds;
+                        patients_with_recorded_wait++;
+
+                        write_log(
+                            "[SCHEDULER] %s waited %d seconds before entering %s\n",
+                            p.name, p.wait_seconds, p.room
+                        );
+                    }
 
                     next_room++;
                     if (next_room > MAX_ROOMS) {

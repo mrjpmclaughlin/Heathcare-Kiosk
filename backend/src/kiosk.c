@@ -54,6 +54,8 @@ void* kiosk_thread(void* arg) {
         p.room[0] = '\0';
         p.time_in_room = 0;
         p.wait_ticks = 0;
+        p.arrival_time = time(NULL);  // record real-world arrival time
+        p.wait_seconds = -1;
 
         enqueue(&queue, p);
         write_log("[KIOSK %d] Added %s (triage %d)\n",

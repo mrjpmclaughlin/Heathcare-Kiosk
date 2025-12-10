@@ -1,3 +1,5 @@
+#include <time.h>
+
 #ifndef QUEUE_H
 #define QUEUE_H
 
@@ -10,7 +12,9 @@ typedef struct {
     int kiosk_id;
     char room[32];     // exam room label, empty when waiting
     int time_in_room;  // how many scheduler ticks they’ve been in a room
-    int wait_ticks;    // how many scheduler ticks they’ve waited in the queue
+    int wait_ticks;   // how many scheduler ticks they’ve waited in the queue
+    time_t arrival_time; // when they checked in at the kiosk
+    int    wait_seconds;
 } Patient;
 
 typedef struct {
