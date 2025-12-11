@@ -6,7 +6,7 @@ run backend:
    3. ./er_sim
 
 then run frontend:
-    1. cd frontend
-    2. python3 -m http.server 8000
-    3. open localhost:8000
+   1. cd frontend
+   2. python3 -m http.server 8000
+   3. open localhost:8000 in a web broswer
     
