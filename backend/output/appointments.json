@@ -1,0 +1,29 @@
+{
+  "waiting": [
+    {"id": 103, "name": "Patient 103", "triage": 5, "kiosk_id": 1, "status": "waiting", "arrival_time": 1765427948, "wait_seconds": 32},
+    {"id": 104, "name": "Patient 104", "triage": 5, "kiosk_id": 4, "status": "waiting", "arrival_time": 1765427949, "wait_seconds": 31},
+    {"id": 105, "name": "Patient 105", "triage": 5, "kiosk_id": 3, "status": "waiting", "arrival_time": 1765427951, "wait_seconds": 29},
+    {"id": 106, "name": "Patient 106", "triage": 5, "kiosk_id": 2, "status": "waiting", "arrival_time": 1765427953, "wait_seconds": 27},
+    {"id": 107, "name": "Patient 107", "triage": 5, "kiosk_id": 1, "status": "waiting", "arrival_time": 1765427954, "wait_seconds": 26},
+    {"id": 108, "name": "Patient 108", "triage": 5, "kiosk_id": 4, "status": "waiting", "arrival_time": 1765427956, "wait_seconds": 24},
+    {"id": 109, "name": "Patient 109", "triage": 5, "kiosk_id": 2, "status": "waiting", "arrival_time": 1765427958, "wait_seconds": 22},
+    {"id": 110, "name": "Patient 110", "triage": 5, "kiosk_id": 3, "status": "waiting", "arrival_time": 1765427959, "wait_seconds": 21},
+    {"id": 111, "name": "Patient 111", "triage": 5, "kiosk_id": 1, "status": "waiting", "arrival_time": 1765427961, "wait_seconds": 19},
+    {"id": 112, "name": "Patient 112", "triage": 4, "kiosk_id": 4, "status": "waiting", "arrival_time": 1765427963, "wait_seconds": 17},
+    {"id": 113, "name": "Patient 113", "triage": 5, "kiosk_id": 2, "status": "waiting", "arrival_time": 1765427964, "wait_seconds": 16},
+    {"id": 114, "name": "Patient 114", "triage": 3, "kiosk_id": 3, "status": "waiting", "arrival_time": 1765427966, "wait_seconds": 14},
+    {"id": 115, "name": "Patient 115", "triage": 5, "kiosk_id": 1, "status": "waiting", "arrival_time": 1765427968, "wait_seconds": 12},
+    {"id": 116, "name": "Patient 116", "triage": 5, "kiosk_id": 4, "status": "waiting", "arrival_time": 1765427969, "wait_seconds": 11},
+    {"id": 117, "name": "Patient 117", "triage": 5, "kiosk_id": 2, "status": "waiting", "arrival_time": 1765427971, "wait_seconds": 9},
+    {"id": 118, "name": "Patient 118", "triage": 5, "kiosk_id": 3, "status": "waiting", "arrival_time": 1765427973, "wait_seconds": 7},
+    {"id": 119, "name": "Patient 119", "triage": 4, "kiosk_id": 1, "status": "waiting", "arrival_time": 1765427974, "wait_seconds": 6},
+    {"id": 120, "name": "Patient 120", "triage": 1, "kiosk_id": 4, "status": "waiting", "arrival_time": 1765427976, "wait_seconds": 4},
+    {"id": 121, "name": "Patient 121", "triage": 5, "kiosk_id": 2, "status": "waiting", "arrival_time": 1765427978, "wait_seconds": 2},
+    {"id": 122, "name": "Patient 122", "triage": 2, "kiosk_id": 3, "status": "waiting", "arrival_time": 1765427979, "wait_seconds": 1}
+  ],
+  "being_seen": [
+    {"id": 100, "name": "Patient 100", "triage": 5, "kiosk_id": 4, "status": "being_seen", "room": "Exam 1", "arrival_time": 1765427943, "wait_seconds": 33},
+    {"id": 101, "name": "Patient 101", "triage": 5, "kiosk_id": 3, "status": "being_seen", "room": "Exam 2", "arrival_time": 1765427944, "wait_seconds": 34},
+    {"id": 102, "name": "Patient 102", "triage": 5, "kiosk_id": 2, "status": "being_seen", "room": "Exam 3", "arrival_time": 1765427946, "wait_seconds": 33}
+  ]
+}

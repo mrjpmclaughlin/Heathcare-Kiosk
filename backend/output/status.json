@@ -1,0 +1,7 @@
+{
+  "scheduling_policy": "MLFQ_AGING",
+  "total_patients": 23,
+  "average_wait_seconds": 25,
+  "patients_with_recorded_wait": 102,
+  "last_update": "N/A"
+}

@@ -10,17 +10,6 @@ backend/src/*.so
 backend/src/*.dSYM/
 *.dSYM/
 
-# Backend output files
-
-backend/output/appointments.json
-backend/output/status.json
-backend/output/log.txt
-
-# symlinked into frontend:
-frontend/appointments.json
-frontend/status.json
-frontend/log.txt
-
 # OS / editor junk files
 
 # macOS
