@@ -372,9 +372,8 @@ void* scheduler_main(void* arg) {
                     p.time_in_room = 0;
                     p.wait_ticks   = 0;
 
-                    if (p.wait_seconds < 0) {  // -1 means “not calculated yet”
-                        time_t now = time(NULL);
-                        p.wait_seconds = (int)difftime(now, p.arrival_time);
+                    if (p.time_in_room <= 0) {
+                        //time_t now = time(NULL);
                         total_wait_seconds += p.wait_seconds;
                         patients_with_recorded_wait++;
 
