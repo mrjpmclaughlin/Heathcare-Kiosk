@@ -179,54 +179,69 @@ function renderQueue(waiting) {
     tbody.innerHTML = "";
 
     if (!Array.isArray(waiting) || waiting.length === 0) {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 5;
-    td.className = "small-label";
-    td.textContent = "No patients currently waiting.";
-    tr.appendChild(td);
-    tbody.appendChild(tr);
-    return;
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 5;
+        td.className = "small-label";
+        td.textContent = "No patients currently waiting.";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
     }
 
     waiting.forEach(p => {
-    const tr = document.createElement("tr");
+        const tr = document.createElement("tr");
 
-    const tdName = document.createElement("td");
-    tdName.textContent = p.name ?? "Unknown";
-    tr.appendChild(tdName);
+        const tdName = document.createElement("td");
+        tdName.textContent = p.name ?? "Unknown";
+        tdName.style.fontFamily = '"Lucida Console", "Courier New", monospace';
+        tdName.style.fontWeight = "600";
+        tdName.style.color = "#555";
+        tr.appendChild(tdName);
 
-    const tdTriage = document.createElement("td");
-    const triage = p.triage ?? "?";
-    const span = document.createElement("span");
-    span.className = "triage triage-" + triage;
-    span.textContent = triage;
-    tdTriage.appendChild(span);
-    tr.appendChild(tdTriage);
+        const tdTriage = document.createElement("td");
+        const triage = p.triage ?? "?";
+        const span = document.createElement("span");
+        span.className = "triage triage-" + triage;
+        span.textContent = triage;
+        span.style.fontFamily = '"Lucida Console", "Courier New", monospace';
+        span.style.fontWeight = "600";
+        span.style.fontSize = "12px";
+        tdTriage.appendChild(span);
+        tr.appendChild(tdTriage);
 
-    const tdArrival = document.createElement("td");
-    tdArrival.textContent = formatTimeEpoch(p.arrival_time);
-    tr.appendChild(tdArrival);
+        const tdArrival = document.createElement("td");
+        tdArrival.textContent = formatTimeEpoch(p.arrival_time);
+        tdArrival.style.fontFamily = '"Lucida Console", "Courier New", monospace';
+        tdArrival.style.fontWeight = "600";
+        tdArrival.style.color = "#555";
+        tr.appendChild(tdArrival);
 
-    const tdKiosk = document.createElement("td");
-    tdKiosk.textContent = p.kiosk_id != null ? `#${p.kiosk_id}` : "-";
-    tr.appendChild(tdKiosk);
+        const tdKiosk = document.createElement("td");
+        tdKiosk.textContent = p.kiosk_id != null ? `#${p.kiosk_id}` : "-";
+        tdKiosk.style.fontFamily = '"Lucida Console", "Courier New", monospace';
+        tdKiosk.style.fontWeight = "600";
+        tdKiosk.style.color = "#555";
+        tr.appendChild(tdKiosk);
 
-    const tdStatus = document.createElement("td");
-    const statusSpan = document.createElement("span");
-    const s = (p.status || "waiting").toLowerCase();
-    statusSpan.textContent = s;
-    statusSpan.className = "pill " + (s === "waiting" ? "waiting" : s === "being_seen" ? "being-seen" : "");
-    tdStatus.appendChild(statusSpan);
-    if (typeof p.wait_seconds === "number" && p.wait_seconds >= 0) {
-        const waitSpan = document.createElement("span");
-        waitSpan.className = "small-label";
-        waitSpan.style.marginLeft = "4px";
-        waitSpan.textContent = `(${formatDuration(p.wait_seconds)})`;
-        tdStatus.appendChild(waitSpan);
-    }
-    tr.appendChild(tdStatus);
-    tbody.appendChild(tr);
+        const tdStatus = document.createElement("td");
+        const statusSpan = document.createElement("span");
+        const s = (p.status || "waiting").toLowerCase();
+        statusSpan.textContent = s;
+        statusSpan.className = "pill " + (s === "waiting" ? "waiting" : s === "being_seen" ? "being-seen" : "");
+        tdStatus.appendChild(statusSpan);
+        if (typeof p.wait_seconds === "number" && p.wait_seconds >= 0) {
+            const waitSpan = document.createElement("span");
+            waitSpan.className = "small-label";
+            waitSpan.style.marginLeft = "4px";
+            waitSpan.style.fontFamily = '"Lucida Console", "Courier New", monospace';
+            waitSpan.style.fontWeight = "600";
+            waitSpan.style.color = "#555";
+            waitSpan.textContent = `(${formatDuration(p.wait_seconds)})`;
+            tdStatus.appendChild(waitSpan);
+        }
+        tr.appendChild(tdStatus);
+        tbody.appendChild(tr);
     });
 }
 
@@ -291,6 +306,19 @@ async function refresh() {
     renderLog(logText);
 }
 
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit', hour12: true});
+    document.getElementById("clock").textContent = timeString;
+    const dateString = now.toLocaleDateString([], {year: 'numeric', month: 'long', day: 'numeric'});
+    document.getElementById("date").textContent = dateString;
+}
+
 // Poll every second
 refresh();
 setInterval(refresh, 1000);
+
+// Update clock every second
+updateClock();
+setInterval(updateClock, 1000);
+

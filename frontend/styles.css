@@ -62,6 +62,7 @@ h1, h2, h3 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    padding: auto;
 }
 
 .kiosk-card {
@@ -208,6 +209,7 @@ tbody tr:hover {
 .small-label {
     font-size: 11px;
     color: #6b7280;
+    margin-bottom: 8px;
 }
 
 .status-ok {
@@ -219,3 +221,17 @@ tbody tr:hover {
     color: #dc2626;
     font-size: 11px;
 }
+
+#date {
+    font-weight: 400;
+    font-size: 24px;
+    color: #888;
+}
+
+#clock {
+    font-weight: 600;
+    font-size: 30px;
+    color: #3b82f6;
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+

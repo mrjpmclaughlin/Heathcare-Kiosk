@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-
 #include <pthread.h>
 
 #include "globals.h"
@@ -20,6 +19,16 @@ pthread_cond_t not_full  = PTHREAD_COND_INITIALIZER;
 pthread_cond_t not_empty = PTHREAD_COND_INITIALIZER;
 int discharged_count = 0;
 int simulation_done  = 0;
+
+const char* policy_name(SchedulingPolicy p) {
+    switch (p) {
+        case POLICY_FCFS:     return "FCFS";
+        case POLICY_PRIORITY: return "PRIORITY";
+        case POLICY_RR:       return "ROUND_ROBIN";
+        case POLICY_MLFQ:     return "MLFQ_AGING";
+        default:              return "UNKNOWN";
+    }
+}
 
 int main(void) {
     srand((unsigned)time(NULL));
@@ -62,7 +71,8 @@ int main(void) {
             break;
     }
 
-    printf("Using scheduling policy: %d\n", scheduling_policy);
+    const char* policy_string = policy_name(scheduling_policy);
+    printf("Using scheduling policy: %s\n", policy_string);
 
     // Remove any stale semaphore from previous runs
     sem_unlink("/er_slots_sem");

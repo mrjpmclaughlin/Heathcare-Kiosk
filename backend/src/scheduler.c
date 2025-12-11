@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <semaphore.h>
 #include <time.h>
+
 #include "globals.h"
 #include "scheduler.h"
 #include "queue.h"
@@ -28,7 +29,10 @@ void write_log(const char* fmt, ...) {
     snprintf(path, sizeof(path), "%slog.txt", OUTPUT_PATH);
 
     FILE* f = fopen(path, "a");
-    if (!f) return;
+    if (!f) {
+        perror("fopen");
+        return;
+    }
 
     va_list args;
     va_start(args, fmt);
@@ -43,7 +47,10 @@ void write_json_files() {
     snprintf(app_path, sizeof(app_path), "%sappointments.json", OUTPUT_PATH);
 
     FILE* f = fopen(app_path, "w");
-    if (!f) return;
+    if (!f) {
+        perror("fopen");
+        return;
+    }
 
     // Waiting patients
     fprintf(f, "{\n  \"waiting\": [\n");
@@ -93,7 +100,10 @@ void write_json_files() {
     snprintf(status_path, sizeof(status_path), "%sstatus.json", OUTPUT_PATH);
 
     FILE* s = fopen(status_path, "w");
-    if (!s) return;
+    if (!s) {
+        perror("fopen");
+        return;
+    }
 
     int total = queue.size + being_seen.size;
 
@@ -183,7 +193,7 @@ void* scheduler_main(void* arg) {
     write_log("[SCHEDULER] Starting with policy %s\n", policy_name(scheduling_policy));
 
     while (1) {
-        sleep(2);  // scheduler tick
+        sleep(1);  // scheduler tick
 
         pthread_mutex_lock(&lock);
 
@@ -191,6 +201,13 @@ void* scheduler_main(void* arg) {
             pthread_mutex_unlock(&lock);
             break;  // exit scheduler_main
         }       
+
+        // Update waiting times
+        for (int i = 0; i < queue.size; i++) {
+            Patient *p = &queue.items[i];
+            time_t now = time(NULL);
+            p->wait_seconds = (int)difftime(now, p->arrival_time);
+        }      
 
         //  Aging for MLFQ so it will increase wait_ticks and boost triage over time. Consulted ChatGPT to help with the logic
         if (scheduling_policy == POLICY_MLFQ) {
